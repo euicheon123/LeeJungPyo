@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "736137145575",
+    "project_id": "leejungpyo-1a334",
+    "storage_bucket": "leejungpyo-1a334.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736137145575:android:bab58cb3424206c0e88642",
+        "android_client_info": {
+          "package_name": "kr.euicheon.leejungpyo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYyKemCPFWEcP5H_QWlPZjjXLO3l_VurM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
