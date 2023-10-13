@@ -88,5 +88,9 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.x.x")
     implementation("androidx.compose.material:material:1.x.x")
     implementation("androidx.compose.ui:ui-tooling:1.x.x")
+    implementation "androidx.compose.runtime:runtime-livedata:1.6.0-alpha07"
+    implementation "androidx.compose.runtime:runtime-ktx:1.6.0-alpha07"
+
+
 
 }

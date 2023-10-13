@@ -1,71 +1,78 @@
 package kr.euicheon.leejungpyo.main
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.layout.Layout
 import androidx.navigation.NavController
 import kr.euicheon.leejungpyo.LeeViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+
+import kr.euicheon.leejungpyo.R
+import java.util.Date
 
 @Composable
 fun CalendarScreen(navController: NavController, vm: LeeViewModel) {
-    val days = listOf("월", "화", "수", "목", "금", "토", "일")
-    //val dates = vm.dates.value // This assumes that your ViewModel provides dates in a LiveData or State object
+    val events by vm.calendarEvents.isInitialized
 
-}
 
-@Composable
-fun CalendarView(month: List<String>, days: List<String>, dates: List<Int>, onDateClick: (Int) -> Unit) {
-    // Month and Year row
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = "2023년 7월")
-        Icon(imageVector = Icons.Default.Search, contentDescription = null)
-    }
-
-    // Days row
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        days.forEach { day ->
-            Text(text = day, modifier = Modifier.weight(1f))
-        }
-    }
-
-    // Dates grid
-    dates.chunked(7).forEach { week ->
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            week.forEach { date ->
-                Box(
-                    contentAlignment = Alignment.Center,
+            // CalendarView
+            // You can use a Compose library for Calendar or build your own custom calendar view here.
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ImageViews and TextViews for each day
+            // For simplicity, here's a single day's example:
+            val currentDate = Date() // Example date. Replace this with your desired date.
+            val currentEvent = events[currentDate]
+
+            Row(
+                modifier = Modifier.padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.lee_logo),
+                    contentDescription = null,
                     modifier = Modifier
-                        .weight(1f)
-                        .clickable { onDateClick(date) }
-                ) {
-                    if (date != 0) Text(text = date.toString())
-                    // Here, you can also add the image for specific dates using the `Image` composable
-                }
+                        .size(100.dp)
+                        .clickable {
+                            // Handle Image click, maybe navigate to another screen with details?
+                        }
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = currentEvent ?: "No event", // Show event if there's any, else show "No event".
+                    modifier = Modifier.clickable {
+                        // Handle Text click.
+                        // For instance, you can set the selected date in the ViewModel.
+                        vm.setSelectedDate(currentDate)
+                    }
+                )
             }
+
+            // You can continue for other days, or use a loop if the data is dynamic.
+
         }
     }
 }
+
+
+
 

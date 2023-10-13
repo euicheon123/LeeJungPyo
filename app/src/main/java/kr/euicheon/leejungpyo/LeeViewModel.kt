@@ -2,6 +2,7 @@ package kr.euicheon.leejungpyo
 
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -10,6 +11,7 @@ import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kr.euicheon.leejungpyo.data.Event
 import kr.euicheon.leejungpyo.data.UserData
+import java.util.Date
 import javax.inject.Inject
 
 const val USERS = "users"
@@ -25,9 +27,13 @@ class LeeViewModel @Inject constructor(
     val inProgress = mutableStateOf(false)
     val userData = mutableStateOf<UserData?>(null)
     val popupNotification = mutableStateOf<Event<String>?>(null)
+    // LiveData to manage the selected date on the calendar
+    val selectedDate = MutableLiveData<Date>()
+    // LiveData to manage events or items you might want to display on specific dates
+    val calendarEvents = MutableLiveData<Map<Date, String>>()
 
     init {
-        auth.signOut()
+        //auth.signOut()
         val currentUser = auth.currentUser
         signedIn.value = currentUser != null
         currentUser?.uid?.let { uid ->
@@ -146,6 +152,24 @@ class LeeViewModel @Inject constructor(
                 inProgress.value = false
             }
 
+    }
+
+    // Function to set a selected date
+    fun setSelectedDate(date: Date) {
+        selectedDate.value = date
+    }
+
+    // Function to add an event to a specific date
+    fun addCalendarEvent(date: Date, event: String) {
+        val currentEvents = calendarEvents.value ?: mapOf()
+        val updatedEvents = currentEvents.toMutableMap()
+        updatedEvents[date] = event
+        calendarEvents.value = updatedEvents
+    }
+
+    // Function to get an event for a specific date
+    fun getEventForDate(date: Date): String? {
+        return calendarEvents.value?.get(date)
     }
 
     fun handleException(exception: Exception? = null, customMessage: String = "") {
