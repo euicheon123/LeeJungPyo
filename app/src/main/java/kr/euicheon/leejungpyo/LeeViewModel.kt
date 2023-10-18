@@ -9,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kr.euicheon.leejungpyo.data.Event
 import kr.euicheon.leejungpyo.data.UserData
 import java.util.Date
@@ -30,7 +31,8 @@ class LeeViewModel @Inject constructor(
     // LiveData to manage the selected date on the calendar
     val selectedDate = MutableLiveData<Date>()
     // LiveData to manage events or items you might want to display on specific dates
-    val calendarEvents = MutableLiveData<Map<Date, String>>()
+    val calendarEvents = MutableStateFlow<Map<Date, String>>(emptyMap())
+
 
     init {
         //auth.signOut()
@@ -106,10 +108,7 @@ class LeeViewModel @Inject constructor(
             UserData(        //userData 라는 곳에 유저 정보 저장 Parameter에 입력된 정보가 있으면 해당 정보 저장, 없으면 기존 정보 저장
                 userId = uid,
                 name = name ?: userData.value?.name,
-                username = username ?: userData.value?.username,
-                bio = bio ?: userData.value?.bio,
-                imageUrl = imageUrl ?: userData.value?.imageUrl,
-                following = userData.value?.following
+                username = username ?: userData.value?.username
             )
 
         uid?.let {
@@ -179,6 +178,5 @@ class LeeViewModel @Inject constructor(
         popupNotification.value = Event(message)
 
     }
-
 
 }
