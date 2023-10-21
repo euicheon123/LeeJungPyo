@@ -1,12 +1,13 @@
 package kr.euicheon.leejungpyo
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,6 +24,7 @@ import kr.euicheon.leejungpyo.ui.theme.LeejungpyoTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -45,11 +47,13 @@ sealed class DestinationScreen(val route: String) {
     object Calendar: DestinationScreen("calendar")
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LeeJungPyoApp() {
 
     val vm = hiltViewModel<LeeViewModel>()
     val navController = rememberNavController()
+
     
     NotificationMessage(vm = vm)
 
@@ -69,6 +73,7 @@ fun LeeJungPyoApp() {
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {

@@ -28,10 +28,6 @@ class LeeViewModel @Inject constructor(
     val inProgress = mutableStateOf(false)
     val userData = mutableStateOf<UserData?>(null)
     val popupNotification = mutableStateOf<Event<String>?>(null)
-    // LiveData to manage the selected date on the calendar
-    val selectedDate = MutableLiveData<Date>()
-    // LiveData to manage events or items you might want to display on specific dates
-    val calendarEvents = MutableStateFlow<Map<Date, String>>(emptyMap())
 
 
     init {
@@ -100,15 +96,13 @@ class LeeViewModel @Inject constructor(
     private fun createOrUpdateProfile(
         name: String? = null,
         username: String? = null,
-        bio: String? = null,
-        imageUrl: String? = null,
     ) {
         val uid = auth.currentUser?.uid
         val userData =
             UserData(        //userData 라는 곳에 유저 정보 저장 Parameter에 입력된 정보가 있으면 해당 정보 저장, 없으면 기존 정보 저장
                 userId = uid,
                 name = name ?: userData.value?.name,
-                username = username ?: userData.value?.username
+                username = username ?: userData.value?.username,
             )
 
         uid?.let {
@@ -153,23 +147,6 @@ class LeeViewModel @Inject constructor(
 
     }
 
-    // Function to set a selected date
-    fun setSelectedDate(date: Date) {
-        selectedDate.value = date
-    }
-
-    // Function to add an event to a specific date
-    fun addCalendarEvent(date: Date, event: String) {
-        val currentEvents = calendarEvents.value ?: mapOf()
-        val updatedEvents = currentEvents.toMutableMap()
-        updatedEvents[date] = event
-        calendarEvents.value = updatedEvents
-    }
-
-    // Function to get an event for a specific date
-    fun getEventForDate(date: Date): String? {
-        return calendarEvents.value?.get(date)
-    }
 
     fun handleException(exception: Exception? = null, customMessage: String = "") {
         exception?.printStackTrace()
