@@ -4,42 +4,45 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Row
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
-import kr.euicheon.leejungpyo.LeeViewModel
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import java.util.Date
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import kr.euicheon.leejungpyo.DestinationScreen
+import kr.euicheon.leejungpyo.LeeViewModel
 import kr.euicheon.leejungpyo.R
 import kr.euicheon.leejungpyo.data.LeeActions
 import kr.euicheon.leejungpyo.data.LeeDate
 import kr.euicheon.leejungpyo.data.LeeProperties
 import kr.euicheon.leejungpyo.data.LeeWidgets
 import kr.euicheon.leejungpyo.widgets.DefaultDay
-import kr.euicheon.leejungpyo.widgets.DefaultHeader
+import kr.euicheon.leejungpyo.widgets.MaterialHeader
 import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.YearMonth
 import java.util.*
+
 
 const val WEIGHT_7DAY_WEEK = 1 / 7f
 
@@ -48,106 +51,145 @@ const val WEIGHT_7DAY_WEEK = 1 / 7f
 @Composable
 fun CalendarScreen(navController: NavController, vm: LeeViewModel) {
     var month by remember { mutableStateOf(YearMonth.now()) }
+    var selectionSet by remember { mutableStateOf(setOf<LeeDate>()) }
 
-    DefaultCalendar(
+    MaterialCalendar(
         month = month,
+        selectionSet = selectionSet,
         actions = LeeActions(
             onClickedPreviousMonth = { month = month.minusMonths(1) },
-            onClickedNextMonth = { month = month.plusMonths(1) }
+            onClickedNextMonth = { month = month.plusMonths(1) },
+        ),
+        onSelected = { selectionSet = mutableSetOf(it).apply { addAll(selectionSet) } },
+        navController = navController
+    )
+}
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun MaterialCalendar(
+    month: YearMonth,
+    selectionSet: Set<LeeDate>,
+    actions: LeeActions,
+    onSelected: (LeeDate) -> Unit,
+    navController: NavController,
+) {
+    LeeCalendar(
+        month = month,
+        actions = actions,
+
+        widgets = LeeWidgets(
+            header = { month, todayMonth, actions ->
+                MaterialHeader(month, todayMonth, actions)
+            },
+            headerDayRow = { headerDayList -> HeaderDayRow(headerDayList = headerDayList) },
+            day = { dayDate, todayDate ->
+                Day(
+                    dayDate = dayDate,
+                    selectionSet = selectionSet,
+                    onSelected = onSelected,
+                    navController = navController
+                )
+            },
+            priorMonthDay = { dayDate -> PriorMonthDay(dayDate = dayDate) },
         )
     )
 }
 
 
-@SuppressLint("NewApi")
 @Composable
-fun DefaultCalendar(
-    month: YearMonth,
-    actions: LeeActions,
+fun HeaderDayRow(
+    headerDayList: Set<DayOfWeek>,
 ) {
-
     val koreanDayNames = listOf("월", "화", "수", "목", "금", "토", "일")
-
-    LeeCalendar(
-        month = month,
-        actions = actions,
-        widgets = LeeWidgets(
-            header = { month, todayMonth, actions ->
-                DefaultHeader(month, todayMonth, actions)
-            },
-            headerDayRow = { headerDayList ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .padding(bottom = 16.dp),
-                ) {
-                    headerDayList.forEachIndexed { index, _ ->
-                        DefaultDay(
-                            text = koreanDayNames[index],
-                            modifier = Modifier.weight(WEIGHT_7DAY_WEEK)
-                        )
-                    }
-                }
-            },
-            day = { dayDate, todayDate ->
-                val isToday = dayDate == todayDate
-                val dayHasPassed = dayDate.day < todayDate.day
-                val isCurrentMonth = dayDate.month == todayDate.month
-
-                val widget: @Composable () -> Unit = {
-                    val weight = if (isToday) 1f else WEIGHT_7DAY_WEEK
-                    DefaultDay(
-                        text = dayDate.day.toString(),
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .weight(weight)
-                            .fillMaxWidth(),
-                        style = TextStyle(
-                            color = when {
-                                isCurrentMonth && dayHasPassed -> MaterialTheme.colorScheme.onSurfaceVariant
-                                isToday -> MaterialTheme.colorScheme.onBackground
-                                else -> MaterialTheme.colorScheme.onSurface
-                            },
-                            fontFamily = if (isToday) FontFamily(Font(R.font.suite_bold)) else FontFamily(
-                                Font(R.font.suite_light)
-                            )
-                        )
-                    )
-                }
-
-                if (isToday) {
-                    Column(
-                        modifier = Modifier.weight(WEIGHT_7DAY_WEEK),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            widget()
-                        }
-                    }
-                } else widget()
-            },
-            priorMonthDay = { dayDate ->
-                DefaultDay(
-                    text = dayDate.day.toString(),
-                    style = TextStyle(color = MaterialTheme.colorScheme.background),
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .fillMaxWidth()
-                        .weight(WEIGHT_7DAY_WEEK)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .padding(vertical = 8.dp),
+    ) {
+        headerDayList.forEachIndexed { index, _ ->
+            DefaultDay(
+                text = koreanDayNames[index],
+                modifier = Modifier
+                    .weight(WEIGHT_7DAY_WEEK)
+                    .alpha(.6f),
+                style = TextStyle(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = FontFamily(Font(R.font.suite_bold))
                 )
-            },
-            headerContainer = { header ->
-                Card {
-                    header()
-                }
-            },
+            )
+        }
+    }
+}
+
+@Composable
+fun RowScope.Day(
+    dayDate: LeeDate,
+    selectionSet: Set<LeeDate>,
+    onSelected: (LeeDate) -> Unit,
+    navController: NavController
+) {
+    val isSelected = selectionSet.contains(dayDate)
+    val weight = if (isSelected) 1f else WEIGHT_7DAY_WEEK
+    val bgColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+
+
+    val widget: @Composable () -> Unit = {
+        DefaultDay(
+            text = dayDate.day.toString(),
+            modifier = Modifier
+                .padding(4.dp)
+                .weight(weight)
+                .fillMaxWidth(),
+            style = TextStyle(
+                color = when {
+                    isSelected -> MaterialTheme.colorScheme.background
+                    else -> MaterialTheme.colorScheme.onBackground
+                },
+                fontFamily = if (isSelected) FontFamily(Font(R.font.suite_bold)) else FontFamily(
+                    Font(R.font.suite_light)
+                )
+            )
         )
+    }
+
+    Column(
+        modifier = Modifier
+            .weight(WEIGHT_7DAY_WEEK)
+            .clickable { navigateTo(navController, DestinationScreen.ToDo, NavParam("todo", dayDate)) },
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Crossfade(targetState = bgColor) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(it)
+            ) {
+                widget()
+            }
+        }
+        Image(
+            painter = painterResource(id = R.drawable.lee_logo),
+            contentDescription = null
+        )
+    }
+}
+
+@Composable
+fun RowScope.PriorMonthDay(
+    dayDate: LeeDate,
+) {
+    DefaultDay(
+        text = dayDate.day.toString(),
+        style = TextStyle(color = MaterialTheme.colorScheme.background),
+        modifier = Modifier
+            .padding(4.dp)
+            .fillMaxWidth()
+            .weight(WEIGHT_7DAY_WEEK)
     )
 }
 

@@ -18,8 +18,11 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kr.euicheon.leejungpyo.auth.LoginScreen
 import kr.euicheon.leejungpyo.auth.SignupScreen
+import kr.euicheon.leejungpyo.data.LeeDate
 import kr.euicheon.leejungpyo.main.CalendarScreen
 import kr.euicheon.leejungpyo.main.NotificationMessage
+import kr.euicheon.leejungpyo.main.PostScreen
+import kr.euicheon.leejungpyo.main.ToDoScreen
 import kr.euicheon.leejungpyo.ui.theme.LeejungpyoTheme
 
 @AndroidEntryPoint
@@ -45,6 +48,8 @@ sealed class DestinationScreen(val route: String) {
     object Signup : DestinationScreen("signup")
     object Login : DestinationScreen("login")
     object Calendar: DestinationScreen("calendar")
+    object ToDo: DestinationScreen("todo")
+    object Post: DestinationScreen("post")
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -58,7 +63,9 @@ fun LeeJungPyoApp() {
     NotificationMessage(vm = vm)
 
 
-    NavHost(navController = navController, startDestination = DestinationScreen.Signup.route) {
+    NavHost(
+        navController = navController, startDestination = DestinationScreen.Signup.route
+    ) {
         composable(DestinationScreen.Signup.route) {
             SignupScreen(navController = navController, vm = vm)
         }
@@ -67,6 +74,16 @@ fun LeeJungPyoApp() {
         }
         composable(DestinationScreen.Calendar.route) {
             CalendarScreen(navController = navController, vm = vm)
+        }
+        composable(DestinationScreen.ToDo.route) {
+            val leeDate =
+                navController.previousBackStackEntry?.arguments?.getParcelable<LeeDate>("todo")
+            leeDate?.let {
+                ToDoScreen(navController = navController, vm = vm, date = leeDate)
+            }
+        }
+        composable(DestinationScreen.Post.route) {
+            PostScreen(navController = navController, vm = vm)
         }
 
     }

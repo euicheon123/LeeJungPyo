@@ -147,6 +147,10 @@ class LeeViewModel @Inject constructor(
 
     }
 
+    private fun onCreateToDo() {
+
+    }
+
 
     fun handleException(exception: Exception? = null, customMessage: String = "") {
         exception?.printStackTrace()
