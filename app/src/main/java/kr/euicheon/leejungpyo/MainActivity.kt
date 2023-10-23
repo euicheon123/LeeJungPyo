@@ -20,6 +20,7 @@ import kr.euicheon.leejungpyo.auth.LoginScreen
 import kr.euicheon.leejungpyo.auth.SignupScreen
 import kr.euicheon.leejungpyo.data.LeeDate
 import kr.euicheon.leejungpyo.main.CalendarScreen
+import kr.euicheon.leejungpyo.main.CreateToDoScreen
 import kr.euicheon.leejungpyo.main.NotificationMessage
 import kr.euicheon.leejungpyo.main.PostScreen
 import kr.euicheon.leejungpyo.main.ToDoScreen
@@ -47,9 +48,10 @@ class MainActivity : ComponentActivity() {
 sealed class DestinationScreen(val route: String) {
     object Signup : DestinationScreen("signup")
     object Login : DestinationScreen("login")
-    object Calendar: DestinationScreen("calendar")
-    object ToDo: DestinationScreen("todo")
-    object Post: DestinationScreen("post")
+    object Calendar : DestinationScreen("calendar")
+    object ToDo : DestinationScreen("todo")
+    object Post : DestinationScreen("post")
+    object CreateToDo : DestinationScreen("createtodo")
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -59,7 +61,7 @@ fun LeeJungPyoApp() {
     val vm = hiltViewModel<LeeViewModel>()
     val navController = rememberNavController()
 
-    
+
     NotificationMessage(vm = vm)
 
 
@@ -84,6 +86,13 @@ fun LeeJungPyoApp() {
         }
         composable(DestinationScreen.Post.route) {
             PostScreen(navController = navController, vm = vm)
+        }
+        composable(DestinationScreen.CreateToDo.route) {
+            val leeDate =
+                navController.previousBackStackEntry?.arguments?.getParcelable<LeeDate>("createtodo")
+            leeDate?.let {
+                CreateToDoScreen(navController = navController, vm = vm, date = leeDate)
+            }
         }
 
     }

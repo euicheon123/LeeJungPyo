@@ -1,21 +1,29 @@
 package kr.euicheon.leejungpyo
 
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kr.euicheon.leejungpyo.data.Event
+import kr.euicheon.leejungpyo.data.LeeDate
 import kr.euicheon.leejungpyo.data.UserData
+import java.io.FileDescriptor
 import java.util.Date
+import java.util.UUID
 import javax.inject.Inject
 
 const val USERS = "users"
+const val DATECOMP = "leedate"
 
 @HiltViewModel
 class LeeViewModel @Inject constructor(
@@ -28,6 +36,7 @@ class LeeViewModel @Inject constructor(
     val inProgress = mutableStateOf(false)
     val userData = mutableStateOf<UserData?>(null)
     val popupNotification = mutableStateOf<Event<String>?>(null)
+    val dateComponent = mutableStateOf<List<LeeDate>>(listOf())
 
 
     init {
@@ -139,6 +148,7 @@ class LeeViewModel @Inject constructor(
                 val user = it.toObject<UserData>()
                 userData.value = user
                 inProgress.value = false
+                refreshToDo()
             }
             .addOnFailureListener { exc ->
                 handleException(exc, "사용자 정보를 가져오지 못했습니다 :(")
@@ -147,7 +157,53 @@ class LeeViewModel @Inject constructor(
 
     }
 
-    private fun onCreateToDo() {
+
+    @RequiresApi(Build.VERSION_CODES.O)
+     fun onCreateToDo(description: List<String>, date:LeeDate) {
+        val currentUid = auth.currentUser?.uid
+
+        if (currentUid != null) {
+            val dateUuid = UUID.randomUUID().toString()
+
+            // Firebase에 저장할 데이터 셋.
+            val leeDate = LeeDate(
+                day = date.day,
+                dayOfWeek = date.dayOfWeek,
+                month = date.month,
+                userId = currentUid,
+                todoList = description
+            )
+
+            db.collection(DATECOMP).document(dateUuid).set(leeDate)
+                .addOnSuccessListener {
+                    popupNotification.value = Event("저장되었습니다 :)")
+                    refreshToDo()
+                }
+        }
+
+    }
+
+    private fun refreshToDo() {
+        val currentUid = auth.currentUser?.uid
+        if (currentUid != null) {
+            db.collection(DATECOMP).whereEqualTo("userId", currentUid).get()
+                .addOnSuccessListener { documents ->
+                    convertToDo(documents, dateComponent)
+                }
+                .addOnFailureListener { exc ->
+                    handleException(exc, "일정을 가져오는데 실패했어요 :(")
+                }
+        }
+    }
+
+    private fun convertToDo(documents: QuerySnapshot, outState: MutableState<List<LeeDate>>) {
+        val newToDo = mutableListOf<LeeDate>()
+        documents.forEach { doc ->
+            val todo = doc.toObject<LeeDate>()
+            newToDo.add(todo)
+        }
+
+        outState.value = newToDo
 
     }
 
