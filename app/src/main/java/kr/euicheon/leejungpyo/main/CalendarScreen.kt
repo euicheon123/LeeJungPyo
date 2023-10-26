@@ -69,6 +69,4 @@ fun CalendarView(month: List<String>, days: List<String>, dates: List<Int>, onDa
     }
 }
 
-//Commit point
-//Commit point2
 
