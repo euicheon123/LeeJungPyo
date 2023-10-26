@@ -31,9 +31,9 @@ import java.time.YearMonth
 data class LeeWidgets(
     val header: @Composable (month: YearMonth, todayMonth: YearMonth, actions: LeeActions) -> Unit,
     val headerDayRow: @Composable (headerDayList: Set<DayOfWeek>) -> Unit,
-    val day: @Composable RowScope.(dayDate: LeeDate, todayDate: LeeDate) -> Unit,
-    val priorMonthDay: @Composable RowScope.(dayDate: LeeDate) -> Unit,
-    val nextMonthDay: @Composable RowScope.(dayDate: LeeDate) -> Unit = priorMonthDay,
+    val day: @Composable RowScope.(dayDate: CalendarDate, todayDate: CalendarDate) -> Unit,
+    val priorMonthDay: @Composable RowScope.(dayDate: CalendarDate) -> Unit,
+    val nextMonthDay: @Composable RowScope.(dayDate: CalendarDate) -> Unit = priorMonthDay,
     val headerContainer: @Composable (@Composable () -> Unit) -> Unit = { it() },
     val monthContainer: @Composable (@Composable () -> Unit) -> Unit = { it() },
     val weekContainer: @Composable (@Composable () -> Unit) -> Unit = { it() }

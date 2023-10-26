@@ -26,13 +26,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kr.euicheon.leejungpyo.DestinationScreen
 import kr.euicheon.leejungpyo.LeeViewModel
+import kr.euicheon.leejungpyo.data.CalendarDate
 import kr.euicheon.leejungpyo.data.LeeDate
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateToDoScreen(navController: NavController, vm: LeeViewModel, date: LeeDate) {
+fun CreateToDoScreen(navController: NavController, vm: LeeViewModel, dayDate: CalendarDate) {
+
 
     var description by rememberSaveable { mutableStateOf(" ") }
     val focusManager = LocalFocusManager.current
@@ -51,7 +56,7 @@ fun CreateToDoScreen(navController: NavController, vm: LeeViewModel, date: LeeDa
             Text(text = "취소", modifier = Modifier.clickable { navController.popBackStack() })
             Text(text = "저장", modifier = Modifier.clickable {
                 focusManager.clearFocus()
-                vm.onCreateToDo(listOf(description), date)
+                vm.onCreateToDo(listOf(description), dayDate)
                 navController.popBackStack()
             })
         }

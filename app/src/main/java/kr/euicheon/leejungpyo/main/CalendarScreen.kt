@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
@@ -22,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -33,7 +31,7 @@ import kr.euicheon.leejungpyo.DestinationScreen
 import kr.euicheon.leejungpyo.LeeViewModel
 import kr.euicheon.leejungpyo.R
 import kr.euicheon.leejungpyo.data.LeeActions
-import kr.euicheon.leejungpyo.data.LeeDate
+import kr.euicheon.leejungpyo.data.CalendarDate
 import kr.euicheon.leejungpyo.data.LeeProperties
 import kr.euicheon.leejungpyo.data.LeeWidgets
 import kr.euicheon.leejungpyo.widgets.DefaultDay
@@ -42,7 +40,8 @@ import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.YearMonth
 import java.util.*
-
+import kotlinx.serialization.*
+import kotlinx.serialization.json.Json
 
 const val WEIGHT_7DAY_WEEK = 1 / 7f
 
@@ -51,16 +50,13 @@ const val WEIGHT_7DAY_WEEK = 1 / 7f
 @Composable
 fun CalendarScreen(navController: NavController, vm: LeeViewModel) {
     var month by remember { mutableStateOf(YearMonth.now()) }
-    var selectionSet by remember { mutableStateOf(setOf<LeeDate>()) }
 
     MaterialCalendar(
         month = month,
-        selectionSet = selectionSet,
         actions = LeeActions(
             onClickedPreviousMonth = { month = month.minusMonths(1) },
             onClickedNextMonth = { month = month.plusMonths(1) },
         ),
-        onSelected = { selectionSet = mutableSetOf(it).apply { addAll(selectionSet) } },
         navController = navController
     )
 }
@@ -70,9 +66,7 @@ fun CalendarScreen(navController: NavController, vm: LeeViewModel) {
 @Composable
 fun MaterialCalendar(
     month: YearMonth,
-    selectionSet: Set<LeeDate>,
     actions: LeeActions,
-    onSelected: (LeeDate) -> Unit,
     navController: NavController,
 ) {
     LeeCalendar(
@@ -87,8 +81,6 @@ fun MaterialCalendar(
             day = { dayDate, todayDate ->
                 Day(
                     dayDate = dayDate,
-                    selectionSet = selectionSet,
-                    onSelected = onSelected,
                     navController = navController
                 )
             },
@@ -125,30 +117,20 @@ fun HeaderDayRow(
 
 @Composable
 fun RowScope.Day(
-    dayDate: LeeDate,
-    selectionSet: Set<LeeDate>,
-    onSelected: (LeeDate) -> Unit,
+    dayDate: CalendarDate,
     navController: NavController
 ) {
-    val isSelected = selectionSet.contains(dayDate)
-    val weight = if (isSelected) 1f else WEIGHT_7DAY_WEEK
-    val bgColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
-
 
     val widget: @Composable () -> Unit = {
         DefaultDay(
             text = dayDate.day.toString(),
             modifier = Modifier
                 .padding(4.dp)
-                .weight(weight)
+                .weight(WEIGHT_7DAY_WEEK)
                 .fillMaxWidth(),
             style = TextStyle(
-                color = when {
-                    isSelected -> MaterialTheme.colorScheme.background
-                    else -> MaterialTheme.colorScheme.onBackground
-                },
-                fontFamily = if (isSelected) FontFamily(Font(R.font.suite_bold)) else FontFamily(
-                    Font(R.font.suite_light)
+                color = MaterialTheme.colorScheme.onBackground,
+                fontFamily =  FontFamily(Font(R.font.suite_light)
                 )
             )
         )
@@ -157,21 +139,17 @@ fun RowScope.Day(
     Column(
         modifier = Modifier
             .weight(WEIGHT_7DAY_WEEK)
-            .clickable { navigateTo(navController, DestinationScreen.ToDo, NavParam("todo", dayDate)) },
+            .clickable { navigateTo(navController, DestinationScreen.ToDo, NavParam.ParcelableParam("todo", dayDate)) },
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Crossfade(targetState = bgColor) {
             Box(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(it)
             ) {
                 widget()
             }
-        }
         Image(
             painter = painterResource(id = R.drawable.lee_logo),
             contentDescription = null
@@ -181,7 +159,7 @@ fun RowScope.Day(
 
 @Composable
 fun RowScope.PriorMonthDay(
-    dayDate: LeeDate,
+    dayDate: CalendarDate,
 ) {
     DefaultDay(
         text = dayDate.day.toString(),
@@ -290,7 +268,7 @@ fun LeeMonth(month: YearMonth, todayMonth: YearMonth, widgets: LeeWidgets, weekS
                 monthWeekNumber = i,
                 weekCount = weekCount,
                 priorMonthLength = priorMonthLength,
-                today = LeeDate(
+                today = CalendarDate(
                     day = today,
                     dayOfWeek = todayMonth.atDay(today).dayOfWeek,
                     month = todayMonth
@@ -311,7 +289,7 @@ fun LeeWeek(
     monthWeekNumber: Int,
     weekCount: Int,
     priorMonthLength: Int,
-    today: LeeDate,
+    today: CalendarDate,
     month: YearMonth,
     widgets: LeeWidgets,
     weekStartOffset: Int,
@@ -323,7 +301,7 @@ fun LeeWeek(
                 val priorDay = (priorMonthLength - (startDayOffSet - i))
                 widgets.priorMonthDay(
                     this,
-                    LeeDate(
+                      CalendarDate(
                         priorDay,
                         DayOfWeek.of(dayOfWeekOrdinal++ % 7 + 1),
                         month.minusMonths(1)
@@ -342,7 +320,7 @@ fun LeeWeek(
             val day = if (monthWeekNumber == 0) i else (i + (7 * monthWeekNumber) - startDayOffSet)
             widgets.day(
                 this,
-                LeeDate(day, DayOfWeek.of(dayOfWeekOrdinal++ % 7 + 1), month),
+                CalendarDate(day, DayOfWeek.of(dayOfWeekOrdinal++ % 7 + 1), month),
                 today
             )
         }
@@ -351,7 +329,7 @@ fun LeeWeek(
             for (i in 0 until (7 - endDayCount)) {
                 val nextMonthDay = i + 1
                 widgets.nextMonthDay(
-                    this, LeeDate(
+                    this, CalendarDate(
                         nextMonthDay,
                         DayOfWeek.of(dayOfWeekOrdinal++ % 7 + 1),
                         month.plusMonths(1)

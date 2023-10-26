@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kr.euicheon.leejungpyo.DestinationScreen
 import kr.euicheon.leejungpyo.LeeViewModel
+import kr.euicheon.leejungpyo.main.NavParam.ParcelableParam
 
 @Composable
 fun NotificationMessage(vm: LeeViewModel) {
@@ -47,13 +48,18 @@ fun CommonProgressSpinner() {
         CircularProgressIndicator()
     }
 }
-data class NavParam(
-    val name: String,
-    val value: Parcelable
-)
+
+
+sealed class NavParam(val name: String) {
+    class ParcelableParam(name: String, val value: android.os.Parcelable) : NavParam(name)
+    class StringParam(name: String, val value: String) : NavParam(name)
+}
 fun navigateTo(navController: NavController, dest: DestinationScreen, vararg params: NavParam) {
     for (param in params) {
-        navController.currentBackStackEntry?.arguments?.putParcelable(param.name, param.value)
+        when (param) {
+            is ParcelableParam -> navController.currentBackStackEntry?.arguments?.putParcelable(param.name, param.value)
+            is NavParam.StringParam ->navController.currentBackStackEntry?.arguments?.putString(param.name, param.value)
+        }
     }
     navController.navigate(dest.route) {
         popUpTo(dest.route)

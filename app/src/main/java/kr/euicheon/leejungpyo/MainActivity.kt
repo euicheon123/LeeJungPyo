@@ -16,8 +16,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.json.Json
 import kr.euicheon.leejungpyo.auth.LoginScreen
 import kr.euicheon.leejungpyo.auth.SignupScreen
+import kr.euicheon.leejungpyo.data.CalendarDate
 import kr.euicheon.leejungpyo.data.LeeDate
 import kr.euicheon.leejungpyo.main.CalendarScreen
 import kr.euicheon.leejungpyo.main.CreateToDoScreen
@@ -78,21 +80,19 @@ fun LeeJungPyoApp() {
             CalendarScreen(navController = navController, vm = vm)
         }
         composable(DestinationScreen.ToDo.route) {
-            val leeDate =
-                navController.previousBackStackEntry?.arguments?.getParcelable<LeeDate>("todo")
-            leeDate?.let {
-                ToDoScreen(navController = navController, vm = vm, date = leeDate)
-            }
+            val dayDate = navController.previousBackStackEntry?.arguments?.getParcelable<CalendarDate>("todo")
+            dayDate?.let { it1 -> ToDoScreen(navController = navController, vm = vm, dayDate = it1) }
+
         }
         composable(DestinationScreen.Post.route) {
             PostScreen(navController = navController, vm = vm)
         }
         composable(DestinationScreen.CreateToDo.route) {
-            val leeDate =
-                navController.previousBackStackEntry?.arguments?.getParcelable<LeeDate>("createtodo")
-            leeDate?.let {
-                CreateToDoScreen(navController = navController, vm = vm, date = leeDate)
+            val dayDate = navController.previousBackStackEntry?.arguments?.getParcelable<CalendarDate>("createtodo")
+            if (dayDate != null) {
+                CreateToDoScreen(navController = navController, vm = vm, dayDate = dayDate)
             }
+
         }
 
     }
