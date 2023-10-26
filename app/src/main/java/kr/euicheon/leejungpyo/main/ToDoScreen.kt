@@ -1,5 +1,7 @@
 package kr.euicheon.leejungpyo.main
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import kotlinx.serialization.decodeFromString
 import kr.euicheon.leejungpyo.data.CalendarDate
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ToDoScreen(navController: NavController, vm: LeeViewModel, dayDate: CalendarDate) {
 

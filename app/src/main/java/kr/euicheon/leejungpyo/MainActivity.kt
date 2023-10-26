@@ -16,11 +16,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.serialization.json.Json
 import kr.euicheon.leejungpyo.auth.LoginScreen
 import kr.euicheon.leejungpyo.auth.SignupScreen
 import kr.euicheon.leejungpyo.data.CalendarDate
-import kr.euicheon.leejungpyo.data.LeeDate
 import kr.euicheon.leejungpyo.main.CalendarScreen
 import kr.euicheon.leejungpyo.main.CreateToDoScreen
 import kr.euicheon.leejungpyo.main.NotificationMessage

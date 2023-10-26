@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -13,21 +12,19 @@ import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kr.euicheon.leejungpyo.data.CalendarDate
 import kr.euicheon.leejungpyo.data.Event
 import kr.euicheon.leejungpyo.data.LeeDate
 import kr.euicheon.leejungpyo.data.UserData
-import java.io.FileDescriptor
+import java.time.DayOfWeek
 import java.time.YearMonth
-import java.util.Calendar
-import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
 
 const val USERS = "users"
 const val DATECOMP = "leedate"
 
+@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class LeeViewModel @Inject constructor(
     val auth: FirebaseAuth,
@@ -147,6 +144,7 @@ class LeeViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun getUserData(uid: String) {
         inProgress.value = true
         db.collection(USERS).document(uid).get()
@@ -163,6 +161,22 @@ class LeeViewModel @Inject constructor(
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun mapToLeeDate(map: Map<String, Any>): LeeDate {
+        val day = map["day"] as? Int ?: 0
+        val dayOfWeekValue = map["dayOfWeek"] as? Int ?: 1
+        val dayOfWeek = DayOfWeek.of(dayOfWeekValue)
+        val monthString = map["month"] as? String ?: "2023-01"
+        val month = YearMonth.parse(monthString)
+        val userId = map["userId"] as? String ?: ""
+        val todoList = map["todoList"] as? List<String> ?: listOf()
+        val dayImage = map["dayImage"] as? String ?: ""
+        val dateId = map["dateId"] as? String ?: ""
+
+        return LeeDate(day, dayOfWeek, month, userId, todoList, dayImage, dateId)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     fun getCalendarData(dayDate: CalendarDate) {
         val day = dayDate.day
         val month = dayDate.month
@@ -171,9 +185,13 @@ class LeeViewModel @Inject constructor(
             .addOnSuccessListener { querySnapshot ->
                 if(querySnapshot.documents.isNotEmpty()) {
                     val singleDocument = querySnapshot.documents[0]
-                    val leeDate = singleDocument.toObject(LeeDate::class.java)
-                    if(leeDate != null)
-                     dateComponent.value = leeDate
+                    val mapData = singleDocument.data
+                    if (mapData != null) {
+                        val leeDate = mapToLeeDate(mapData)
+                        dateComponent.value = leeDate
+                        if(leeDate != null)
+                            dateComponent.value = leeDate
+                    }
                 } else {
                     handleException(customMessage = "No Data :(")
                 }
@@ -210,6 +228,7 @@ class LeeViewModel @Inject constructor(
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun refreshToDo() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
@@ -223,11 +242,15 @@ class LeeViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun convertToDo(documents: QuerySnapshot, outState: MutableState<List<LeeDate>>) {
         val newToDo = mutableListOf<LeeDate>()
         documents.forEach { doc ->
-            val todo = doc.toObject<LeeDate>()
-            newToDo.add(todo)
+            val mapData = doc.data
+            if (mapData != null) {
+                val todo = mapToLeeDate(mapData)
+                newToDo.add(todo)
+            }
         }
 
         outState.value = newToDo
