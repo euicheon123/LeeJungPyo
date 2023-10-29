@@ -37,8 +37,7 @@ class LeeViewModel @Inject constructor(
     val userData = mutableStateOf<UserData?>(null)
     val popupNotification = mutableStateOf<Event<String>?>(null)
     val dateComponent = mutableStateOf<LeeDate?>(null)
-    val dateComponentList =mutableStateOf<List<LeeDate>>(listOf())
-
+    val dateComponentList = mutableStateOf<List<LeeDate>>(listOf())
 
 
     init {
@@ -176,27 +175,27 @@ class LeeViewModel @Inject constructor(
         return LeeDate(day, dayOfWeek, month, userId, todoList, dayImage, dateId)
     }
 
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun getCalendarData(dayDate: CalendarDate) {
         val day = dayDate.day
         val month = dayDate.month
 
+
         db.collection(DATECOMP).whereEqualTo("day", day).whereEqualTo("month", month).get()
             .addOnSuccessListener { querySnapshot ->
-                if(querySnapshot.documents.isNotEmpty()) {
+                if (querySnapshot.documents.isNotEmpty()) {
                     val singleDocument = querySnapshot.documents[0]
                     val mapData = singleDocument.data
                     if (mapData != null) {
                         val leeDate = mapToLeeDate(mapData)
                         dateComponent.value = leeDate
-                        if(leeDate != null)
-                            dateComponent.value = leeDate
                     }
                 } else {
-                    handleException(customMessage = "No Data :(")
+                    dateComponent.value = null
                 }
             }
-            .addOnFailureListener { exc->
+            .addOnFailureListener { exc ->
                 handleException(exc, "데이터를 가져오는데 실패했습니다 :(")
             }
     }
@@ -207,26 +206,69 @@ class LeeViewModel @Inject constructor(
         val currentUid = auth.currentUser?.uid
 
         if (currentUid != null) {
-            val dateUuid = UUID.randomUUID().toString()
+            val day = dayDate.day
+            val month = dayDate.month
 
-            // Firebase에 저장할 데이터 셋.
-            val leeDate = LeeDate(
-                day = dayDate.day,
-                dayOfWeek = dayDate.dayOfWeek,
-                month = dayDate.month,
-                userId = currentUid,
-                todoList = description,
-                dateId = dateUuid
-            )
+            // First, check if there's already a document with the same day and month
+            db.collection(DATECOMP).whereEqualTo("day", day).whereEqualTo("month", month).get()
+                .addOnSuccessListener { querySnapshot ->
+                    if (querySnapshot.documents.isNotEmpty()) {
+                        // If document exists, get its ID and update the to-do list
+                        val existingDoc = querySnapshot.documents[0]
+                        val mapData = existingDoc.data
+                        if (mapData != null) {
+                            val leeDate = mapToLeeDate(mapData)
+                            val existingTodoList = leeDate.todoList ?: listOf()
 
-            db.collection(DATECOMP).document(dateUuid).set(leeDate)
-                .addOnSuccessListener {
-                    popupNotification.value = Event("저장되었습니다 :)")
-                    refreshToDo()
+                            if (existingTodoList.size + description.size >3) {
+                                val newList =  description + existingTodoList.dropLast(1)
+
+                                db.collection(DATECOMP).document(existingDoc.id)
+                                    .update("todoList", newList)
+                                    .addOnSuccessListener {
+                                        popupNotification.value = Event("저장되었습니다 :)")
+                                        refreshToDo()
+                                    }
+                                    .addOnFailureListener { exc ->
+                                        handleException(exc, "실패 :(")
+                                    }
+                            }
+                            else {
+                                val updatedTodoList = description + existingTodoList
+                                db.collection(DATECOMP).document(existingDoc.id)
+                                    .update("todoList", updatedTodoList)
+                                    .addOnSuccessListener {
+                                        popupNotification.value = Event("저장되었습니다 :)")
+                                        refreshToDo()
+                                    }
+                                    .addOnFailureListener { exc ->
+                                        handleException(exc, "실패 :(")
+                                    }
+                            }
+                        }
+                    } else {
+                        // If document doesn't exist, create a new one
+                        val dateUuid = UUID.randomUUID().toString()
+
+                        val leeDate = LeeDate(
+                            day = day,
+                            dayOfWeek = dayDate.dayOfWeek,
+                            month = month,
+                            userId = currentUid,
+                            todoList = description,
+                            dateId = dateUuid
+                        )
+
+                        db.collection(DATECOMP).document(dateUuid).set(leeDate)
+                            .addOnSuccessListener {
+                                popupNotification.value = Event("저장되었습니다 :)")
+                                refreshToDo()
+                            }
+                    }
                 }
         }
-
     }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun refreshToDo() {

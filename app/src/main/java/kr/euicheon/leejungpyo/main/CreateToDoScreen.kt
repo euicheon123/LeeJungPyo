@@ -69,7 +69,7 @@ fun CreateToDoScreen(navController: NavController, vm: LeeViewModel, dayDate: Ca
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp),
-                label = { Text(text = "Description") },
+                label = { Text(text = "한번에 하나 총 3번의 오늘 할 일을 작성할 수 있어요 :)") },
                 singleLine = false,
                 colors = TextFieldDefaults.textFieldColors(
                     containerColor = Color.Transparent,
